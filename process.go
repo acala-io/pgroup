@@ -3,6 +3,7 @@ package pgroup
 import (
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"os"
 	"os/exec"
@@ -28,6 +29,14 @@ func (p *process) Run() error {
 		return err
 	}
 	return p.inner.Wait()
+}
+
+func (p *process) AddEnv(key, val string) error {
+	if p == nil {
+		return ErrNotConfigured
+	}
+	p.env = append(p.env, fmt.Sprintf("%s=%s", key, val))
+	return nil
 }
 
 func (p *process) Signal(s syscall.Signal) error {
