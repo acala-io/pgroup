@@ -27,13 +27,7 @@ type processGroup struct {
 	processes []Process
 }
 
-func (p *processGroup) baseContext() context.Context {
-	if p == nil || p.ctx == nil {
-		return context.Background()
-	}
-	return p.ctx
-}
-
+// getOptions returns an array of processOption used for configurating processes.
 func (p *processGroup) getOptions(name string) []processOption {
 
 	options := []processOption{}
@@ -56,6 +50,8 @@ func (p *processGroup) getOptions(name string) []processOption {
 	return options
 }
 
+// checkConfigured is called from functions which require a process to have
+// been added. It returns an error if that is not the case.
 func (p *processGroup) checkConfigured() error {
 	if p == nil || len(p.processes) == 0 {
 		return ErrNotConfigured
@@ -63,24 +59,28 @@ func (p *processGroup) checkConfigured() error {
 	return nil
 }
 
-func (p *processGroup) NewProcess(name, cmd string) error {
+// NewProcess adds a new process with a name and a command
+func (p *processGroup) NewProcess(name, cmd string, options ...processOption) (Process, error) {
 
 	if p == nil {
-		return ErrNotConfigured
+		return nil, ErrNotConfigured
 	}
 
 	proc, err := newProcess(p.ctx, cmd, p.getOptions(name)...)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	p.m.Lock()
+	// TODO: make processes a map instead because there is a key!
 	p.processes = append(p.processes, proc)
 	p.m.Unlock()
-	return nil
+	return proc, nil
 }
 
+// Run runs a group of processes
 func (p *processGroup) Run() error {
 
+	// TODO: will dangling processes be running if the first one fails? write test!
 	err := p.checkConfigured()
 	if err != nil {
 		return err
@@ -96,8 +96,10 @@ func (p *processGroup) Run() error {
 	return g.Wait()
 }
 
+// Signal propagates signal down to all the groups processes
 func (p *processGroup) Signal(s syscall.Signal) error {
 
+	// TODO: is it possible to guarantee that all processes get the signal, even if the first one errors? write test!
 	err := p.checkConfigured()
 	if err != nil {
 		return err
@@ -113,6 +115,7 @@ func (p *processGroup) Signal(s syscall.Signal) error {
 	return g.Wait()
 }
 
+// New creates a new group of processes.
 func New(ctx context.Context, options ...groupOption) (*processGroup, error) {
 	if ctx == nil {
 		panic("nil Context")
@@ -133,6 +136,7 @@ func New(ctx context.Context, options ...groupOption) (*processGroup, error) {
 	return &p, nil
 }
 
+// WithStdOut configures an io.Writer for the groups combined stdout output.
 func WithStdOut(w io.Writer) groupOption {
 	return func(p *processGroup) error {
 		if p.outWriter != nil {
@@ -143,6 +147,7 @@ func WithStdOut(w io.Writer) groupOption {
 	}
 }
 
+// WithStdErr configures an io.Writer for the groups combined stderr output.
 func WithStdErr(w io.Writer) groupOption {
 	return func(p *processGroup) error {
 		if p.errWriter != nil {
@@ -153,6 +158,7 @@ func WithStdErr(w io.Writer) groupOption {
 	}
 }
 
+// WithEnv extends the groups configured environment variables.
 func WithEnv(env []string) groupOption {
 	return func(p *processGroup) error {
 		if len(p.env) > 0 {
