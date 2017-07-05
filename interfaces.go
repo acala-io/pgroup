@@ -5,11 +5,13 @@ import "syscall"
 // Process encapsulates the basic methods a process requires
 type Process interface {
 	Run() error
+	AddEnv(string, string) error
 	Signal(s syscall.Signal) error
 }
 
 // ProcessGroup adds wrapper for a process' constructor
 type ProcessGroup interface {
-	Process
-	NewProcess(name, cmd string) error
+	Run() error
+	Signal(s syscall.Signal) error
+	NewProcess(name, cmd string, options ...processOption) (Process, error)
 }
