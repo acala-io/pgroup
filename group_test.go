@@ -17,10 +17,13 @@ func TestGroup(t *testing.T) {
 	g, err := New(ctx, WithStdOut(os.Stdout), WithStdErr(os.Stdout))
 	assert.Nil(t, err)
 
-	err = g.NewProcess("dir1", "ls -al")
+	port := ":6773"
+	proc, err := g.NewProcess("server", "ls -al")
+	assert.Nil(t, err)
+	err = proc.AddEnv("PORT", port)
 	assert.Nil(t, err)
 
-	err = g.NewProcess("dir2", "ls -al")
+	_, err = g.NewProcess("worker", "ls -al")
 	assert.Nil(t, err)
 
 	err = g.Run()
@@ -39,7 +42,7 @@ func TestSetEnv(t *testing.T) {
 	g, err := New(ctx, WithStdOut(&stdout), WithEnv([]string{envKey}))
 	assert.Nil(t, err)
 
-	err = g.NewProcess("env1", "env")
+	_, err = g.NewProcess("env1", "env")
 	assert.Nil(t, err)
 
 	err = g.Run()
