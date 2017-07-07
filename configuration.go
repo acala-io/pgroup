@@ -19,7 +19,10 @@ type configuration struct {
 
 // wrapper around the stdout writer
 func (p *configuration) stdout() io.Writer {
-	if p == nil || p.outWriter != nil {
+	if p == nil {
+		return passThroughWriter{}
+	}
+	if p.outWriter != nil {
 		return p.outWriter
 	}
 	return passThroughWriter{}
@@ -27,7 +30,10 @@ func (p *configuration) stdout() io.Writer {
 
 // wrapper around the stderr writer
 func (p *configuration) stderr() io.Writer {
-	if p == nil || p.errWriter != nil {
+	if p == nil {
+		return passThroughWriter{}
+	}
+	if p.outWriter != nil {
 		return p.errWriter
 	}
 	return passThroughWriter{}
