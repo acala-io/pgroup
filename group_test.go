@@ -48,6 +48,12 @@ func TestGroup(t *testing.T) {
 	g, err := New(ctx, WithStdOut(os.Stdout), WithStdErr(os.Stdout))
 	assert.Nil(t, err)
 
+	assert.Nil(t, WithEnv([]string{"FOO=BAR"})(g))
+	assert.NotNil(t, WithEnv([]string{"FOO=BAR"})(g))
+
+	assert.NotNil(t, WithStdOut(os.Stdout)(g))
+	assert.NotNil(t, WithStdErr(os.Stdout)(g))
+
 	port := ":6773"
 	proc, err := g.NewProcess("server", "ls -al")
 	assert.Nil(t, err)
