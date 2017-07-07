@@ -3,12 +3,43 @@ package pgroup
 import (
 	"bytes"
 	"context"
+	"errors"
 	"os"
 	"strings"
+	"syscall"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
+
+type fakeProcess struct {
+	mock.Mock
+}
+
+func (fp *fakeProcess) Run() error {
+	args := fp.Called()
+	return args.Error(0)
+}
+
+func (fp *fakeProcess) Signal(s syscall.Signal) error {
+	args := fp.Called(s)
+	return args.Error(0)
+}
+
+func (fp *fakeProcess) AddEnv(key, value string) error {
+	return nil
+}
+
+func TestGroupMethodsWhenNil(t *testing.T) {
+	var p *processGroup
+	assert.Nil(t, p)
+	assert.Equal(t, ErrNotConfigured, p.Run())
+	assert.Equal(t, ErrNotConfigured, p.Signal(syscall.SIGHUP))
+	proc, err := p.NewProcess("dir", "ls -al")
+	assert.Nil(t, proc)
+	assert.Equal(t, ErrNotConfigured, err)
+}
 
 func TestGroup(t *testing.T) {
 	var err error
@@ -51,4 +82,40 @@ func TestSetEnv(t *testing.T) {
 	if !strings.Contains(s, envKey) {
 		t.Fatalf("Env key %s is missing from the commands environment.", envKey)
 	}
+}
+
+func TestRun(t *testing.T) {
+	fake1 := new(fakeProcess)
+	fake1.On("Run").Return(errors.New("foo"))
+	fake2 := new(fakeProcess)
+	fake2.On("Run").Return(nil)
+
+	p := processGroup{
+		processes: []Process{fake1, fake2},
+	}
+
+	err := p.Run()
+	assert.NotNil(t, err)
+	fake1.AssertCalled(t, "Run")
+	fake2.AssertCalled(t, "Run")
+}
+
+func TestSignal(t *testing.T) {
+	fake1 := new(fakeProcess)
+	fake1.On("Run").Return(nil)
+	fake1.On("Signal", syscall.SIGHUP).Return(errors.New("foo"))
+	fake2 := new(fakeProcess)
+	fake2.On("Run").Return(nil)
+	fake2.On("Signal", syscall.SIGHUP).Return(nil)
+
+	p := processGroup{
+		processes: []Process{fake1, fake2},
+	}
+
+	go p.Run()
+	err := p.Signal(syscall.SIGHUP)
+	assert.NotNil(t, err)
+	fake1.AssertCalled(t, "Signal", syscall.SIGHUP)
+	fake2.AssertCalled(t, "Signal", syscall.SIGHUP)
+
 }

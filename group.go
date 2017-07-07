@@ -60,7 +60,7 @@ func (p *processGroup) checkConfigured() error {
 }
 
 // NewProcess adds a new process with a name and a command
-func (p *processGroup) NewProcess(name, cmd string, options ...processOption) (Process, error) {
+func (p *processGroup) NewProcess(name, cmd string) (Process, error) {
 
 	if p == nil {
 		return nil, ErrNotConfigured
@@ -80,7 +80,6 @@ func (p *processGroup) NewProcess(name, cmd string, options ...processOption) (P
 // Run runs a group of processes
 func (p *processGroup) Run() error {
 
-	// TODO: will dangling processes be running if the first one fails? write test!
 	err := p.checkConfigured()
 	if err != nil {
 		return err
@@ -99,7 +98,6 @@ func (p *processGroup) Run() error {
 // Signal propagates signal down to all the groups processes
 func (p *processGroup) Signal(s syscall.Signal) error {
 
-	// TODO: is it possible to guarantee that all processes get the signal, even if the first one errors? write test!
 	err := p.checkConfigured()
 	if err != nil {
 		return err
