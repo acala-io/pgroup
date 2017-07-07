@@ -13,5 +13,5 @@ type Process interface {
 type ProcessGroup interface {
 	Run() error
 	Signal(s syscall.Signal) error
-	NewProcess(name, cmd string, options ...processOption) (Process, error)
+	NewProcess(name, cmd string) (Process, error)
 }
