@@ -1,0 +1,15 @@
+language: go
+
+go:
+ - 1.7
+ - tip
+
+install:
+ - go get -u github.com/golang/lint/golint
+ - go get golang.org/x/sync/errgroup
+ - go get github.com/kvz/logstreamer
+ - go get github.com/stretchr/testify
+
+script:
+ - golint
+ - go test -cover
