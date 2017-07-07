@@ -46,4 +46,3 @@ func main() {
     grp.Signal(<-sigs)
 }
 ```
-
