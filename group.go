@@ -95,6 +95,23 @@ func (p *processGroup) Run() error {
 	return g.Wait()
 }
 
+func (p *processGroup) Kill() error {
+
+	err := p.checkConfigured()
+	if err != nil {
+		return err
+	}
+
+	var g errgroup.Group
+	for _, i := range p.processes {
+		proc := i
+		g.Go(func() error {
+			return proc.Kill()
+		})
+	}
+	return g.Wait()
+}
+
 // Signal propagates signal down to all the groups processes
 func (p *processGroup) Signal(s syscall.Signal) error {
 
