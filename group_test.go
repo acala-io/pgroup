@@ -31,6 +31,11 @@ func (fp *fakeProcess) AddEnv(key, value string) error {
 	return nil
 }
 
+func (fp *fakeProcess) Kill() error {
+	args := fp.Called()
+	return args.Error(0)
+}
+
 func TestGroupMethodsWhenNil(t *testing.T) {
 	var p *processGroup
 	assert.Nil(t, p)

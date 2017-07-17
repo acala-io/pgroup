@@ -7,6 +7,7 @@ type Process interface {
 	Run() error
 	AddEnv(string, string) error
 	Signal(s syscall.Signal) error
+	Kill() error
 }
 
 // ProcessGroup adds wrapper for a process' constructor

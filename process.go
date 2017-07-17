@@ -46,6 +46,11 @@ func (p *process) Signal(s syscall.Signal) error {
 	return syscall.Kill(p.inner.Process.Pid, s)
 }
 
+func (p *process) Kill() error {
+	g := 0 - p.inner.Process.Pid
+	return syscall.Kill(g, syscall.SIGKILL)
+}
+
 // newProcess creates & configures a new process
 func newProcess(ctx context.Context, cmd string, options ...processOption) (*process, error) {
 
