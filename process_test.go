@@ -4,8 +4,11 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"io"
+	"os"
 	"syscall"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -54,5 +57,24 @@ func TestProcess(t *testing.T) {
 	err = p.Run()
 	assert.Nil(t, err)
 	assert.Equal(t, stderr.String(), "", "stderr should be empty")
+	assert.NotEqual(t, stdout.String(), "", "stdout should not be empty")
+}
+
+func TestCancellation(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 40*time.Millisecond)
+	defer cancel()
+
+	var stdout, stderr bytes.Buffer
+	p, err := newProcess(ctx, "./scripts/cancel.sh", withStdOut(io.MultiWriter(&stdout, os.Stdout)), withStdErr(io.MultiWriter(&stderr, os.Stderr)))
+	if err != nil {
+		t.Log(err.Error())
+	}
+	assert.Nil(t, err)
+	err = p.Run()
+	if err != nil {
+		t.Log(err.Error())
+	}
+
+	assert.Nil(t, err)
 	assert.NotEqual(t, stdout.String(), "", "stdout should not be empty")
 }

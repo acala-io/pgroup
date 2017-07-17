@@ -25,10 +25,28 @@ func (p *process) Run() error {
 	if p == nil {
 		return ErrNotConfigured
 	}
+
 	if err := p.inner.Start(); err != nil {
 		return err
 	}
-	return p.inner.Wait()
+
+	errChan := make(chan error)
+	go func() {
+		errChan <- p.inner.Wait()
+	}()
+
+	if p.ctx == nil {
+		return <-errChan
+	}
+
+	for {
+		select {
+		case <-p.ctx.Done():
+			return p.Kill()
+		case err := <-errChan:
+			return err
+		}
+	}
 }
 
 func (p *process) AddEnv(key, val string) error {
@@ -56,15 +74,12 @@ func newProcess(ctx context.Context, cmd string, options ...processOption) (*pro
 
 	var err error
 
-	if ctx == nil {
-		ctx = context.Background()
-	}
-
 	// TODO: find shell command splitter package
 	sm := strings.Split(cmd, " ")
 
 	p := &process{
-		inner: exec.CommandContext(ctx, sm[0], sm[1:]...),
+		inner: exec.Command(sm[0], sm[1:]...),
+		ctx:   ctx,
 	}
 
 	for _, o := range options {
@@ -80,6 +95,12 @@ func newProcess(ctx context.Context, cmd string, options ...processOption) (*pro
 
 	p.inner.Stdout = p.stdout()
 	p.inner.Stderr = p.stderr()
+
+	sysProcAttr := new(syscall.SysProcAttr)
+	sysProcAttr.Setpgid = true
+	sysProcAttr.Pgid = 0
+
+	p.inner.SysProcAttr = sysProcAttr
 
 	return p, nil
 }
