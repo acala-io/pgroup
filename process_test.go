@@ -6,6 +6,7 @@ import (
 	"errors"
 	"io"
 	"os"
+	"strings"
 	"syscall"
 	"testing"
 	"time"
@@ -58,6 +59,19 @@ func TestProcess(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, stderr.String(), "", "stderr should be empty")
 	assert.NotEqual(t, stdout.String(), "", "stdout should not be empty")
+}
+
+func TestAddEnv(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	var stdout, stderr bytes.Buffer
+	p, err := newProcess(ctx, "printenv BAR", withStdOut(&stdout))
+	assert.Nil(t, err)
+	p.AddEnv("BAR", "2")
+	err = p.Run()
+	assert.Nil(t, err)
+	assert.Equal(t, stderr.String(), "", "stderr should be empty")
+	assert.Equal(t, strings.TrimSpace(stdout.String()), "2", "stdout should not be empty")
 }
 
 func TestCancellation(t *testing.T) {

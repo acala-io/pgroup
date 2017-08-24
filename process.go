@@ -22,9 +22,16 @@ type process struct {
 var _ Process = (*process)(nil)
 
 func (p *process) Run() error {
+
 	if p == nil {
 		return ErrNotConfigured
 	}
+
+	env := os.Environ()
+	for _, e := range p.env {
+		env = append(env, e)
+	}
+	p.inner.Env = env
 
 	if err := p.inner.Start(); err != nil {
 		return err
