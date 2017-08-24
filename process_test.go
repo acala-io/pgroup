@@ -74,6 +74,19 @@ func TestAddEnv(t *testing.T) {
 	assert.Equal(t, strings.TrimSpace(stdout.String()), "2", "stdout should not be empty")
 }
 
+func TestEnv(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	var stdout, stderr bytes.Buffer
+	os.Setenv("BAR", "1")
+	p, err := newProcess(ctx, "printenv BAR", withStdOut(&stdout))
+	assert.Nil(t, err)
+	err = p.Run()
+	assert.Nil(t, err)
+	assert.Equal(t, stderr.String(), "", "stderr should be empty")
+	assert.Equal(t, strings.TrimSpace(stdout.String()), "1", "stdout should not be empty")
+}
+
 func TestCancellation(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 40*time.Millisecond)
 	defer cancel()
