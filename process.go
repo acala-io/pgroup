@@ -76,6 +76,10 @@ func (p *process) Kill() error {
 	return syscall.Kill(g, syscall.SIGKILL)
 }
 
+func (p *process) GetPid() int {
+	return p.inner.Process.Pid
+}
+
 // newProcess creates & configures a new process
 func newProcess(ctx context.Context, cmd string, options ...processOption) (*process, error) {
 

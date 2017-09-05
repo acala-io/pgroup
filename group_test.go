@@ -36,6 +36,11 @@ func (fp *fakeProcess) Kill() error {
 	return args.Error(0)
 }
 
+func (fp *fakeProcess) GetPid() int {
+	args := fp.Called()
+	return args.Int(0)
+}
+
 func TestGroupMethodsWhenNil(t *testing.T) {
 	var p *processGroup
 	assert.Nil(t, p)
